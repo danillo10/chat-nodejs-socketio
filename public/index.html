@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat NodeJS e Socket.io</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <form id="chat">
+        <div class="chat-view">
+            <input type="text" placeholder="Digite seu usuário" name="username">
+            <div class="messages"></div>
+            <input type="text" name="message" placeholder="Digite sua mensagem">
+            <button type="submit">Enviar</button>
+        </div>
+        <div class="chat-users">
+            <ul>
+                <!-- Users List -->
+            </ul>
+        </div>
+    </form>
+
+    <script
+  src="https://code.jquery.com/jquery-3.6.0.min.js"
+  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+  crossorigin="anonymous"></script>
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js" integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H" crossorigin="anonymous"></script>
+
+  <script type="text/javascript">
+      var socket = io('http://localhost:3000');
+
+      setTimeout(() => {
+        $("input[name=username]").val(socket.id);
+        $("input[name=message]").focus();
+      }, 1000)
+
+      function renderMessage(message){
+          $('.messages').append('<div class="message"><strong>'+ message.author +'<strong>: '+ message.message +'</div>')
+      }
+      
+      function renderUser(user){
+          $('.chat-users ul').append('<li><strong>'+ user +'<strong></li>')
+      }
+
+      function clear() {
+        $("input[name=message]").val('');
+      }
+
+      socket.on('receivedMessage', function(message){
+          renderMessage(message);
+      })
+
+      socket.on('previousMessages', function(messages){
+        for(message of messages){
+            renderMessage(message);
+        }
+      });
+
+      socket.on('previousUsers', function(users){
+          console.log(users)
+          for(user of users){
+              renderUser(user);
+          }
+      })
+
+      $("#chat").submit(function(e){
+          e.preventDefault();
+
+          var author = $("input[name=username]").val();
+          var message = $("input[name=message]").val();
+
+          if(author.length && message.length) {
+              var messageObject = {
+                author: author,
+                message: message
+              };
+
+              renderMessage(messageObject);
+
+              socket.emit('sendMessage', messageObject);
+              
+              clear();
+          }
+      })
+  </script>
+</body>
+</html>
